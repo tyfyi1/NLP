@@ -87,27 +87,6 @@ npm install
 
 ### 2. 配置API密钥
 
-创建 `.env` 文件，配置各模块的API密钥：
-
-```env
-# 综述生成 - 火山方舟API
-ARK_API_KEY=your-ark-api-key
-
-# 论文总结 - 硅基流动API
-SILICONFLOW_API_KEY=your-siliconflow-api-key
-
-# 论文检索 - OpenAI API（用于语义排序）
-LLM_API_KEY=your-openai-api-key
-
-# 论文翻译 - MiniMax API
-ANTHROPIC_API_KEY=your-minimax-api-key
-
-# Semantic Scholar API（可选）
-SEMANTIC_SCHOLAR_API_KEY=your-semantic-scholar-api-key
-
-# MongoDB连接（可选，用于用户管理）
-MONGO_URI=mongodb://localhost:27017/nlp-tool
-```
 
 ### 3. 配置子模块
 
@@ -120,7 +99,7 @@ MONGO_URI=mongodb://localhost:27017/nlp-tool
 
 ## 启动方式
 
-### 方式一：使用一键重启脚本（推荐）
+### 方式一：使用一键重启脚本（不推荐）
 
 ```bash
 restart_all.bat
