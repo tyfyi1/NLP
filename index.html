@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI文献辅助系统</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    </script>
+</head>
+<body>
+    <!-- 登录注册页面 -->
+    <div id="auth-container" class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <div class="auth-logo"></div>
+                <h2 id="auth-title">登录</h2>
+                <p class="auth-subtitle">AI文献辅助系统</p>
+            </div>
+
+            <!-- 登录表单 -->
+            <div id="login-form" class="auth-form">
+                <div class="form-group">
+                    <label for="login-username">用户名</label>
+                    <input type="text" id="login-username" placeholder="请输入用户名">
+                </div>
+                <div class="form-group">
+                    <label for="login-password">密码</label>
+                    <input type="password" id="login-password" placeholder="请输入密码">
+                </div>
+                <button onclick="login()" class="auth-button">登录</button>
+                <button onclick="guestLogin()" class="auth-button guest-btn">游客登录</button>
+                <p class="auth-switch">还没有账号？<a href="#" onclick="switchToRegister()">立即注册</a></p>
+            </div>
+
+            <!-- 注册表单 -->
+            <div id="register-form" class="auth-form" style="display: none;">
+                <div class="form-group">
+                    <label for="register-username">用户名</label>
+                    <input type="text" id="register-username" placeholder="请输入用户名">
+                </div>
+                <div class="form-group">
+                    <label for="register-email">邮箱</label>
+                    <input type="email" id="register-email" placeholder="请输入邮箱">
+                </div>
+                <div class="form-group">
+                    <label for="register-password">密码</label>
+                    <input type="password" id="register-password" placeholder="请输入密码">
+                </div>
+                <button onclick="register()" class="auth-button">注册</button>
+                <p class="auth-switch">已有账号？<a href="#" onclick="switchToLogin()">立即登录</a></p>
+            </div>
+
+            <div id="auth-message" class="auth-message"></div>
+        </div>
+    </div>
+
+    <!-- 主应用页面 -->
+    <div id="app-container" class="app-container" style="display: none;">
+        <!-- 顶部工具栏 -->
+        <header class="app-header">
+            <div class="header-left">
+                <h1 class="app-title">AI文献助手</h1>
+            </div>
+            <div class="header-right">
+                <span id="user-name" class="user-name"></span>
+                <button onclick="logout()" class="logout-btn">退出</button>
+            </div>
+        </header>
+
+        <!-- 主内容区域 -->
+        <div class="app-main">
+            <!-- 左侧功能导航 -->
+            <aside class="app-sidebar">
+                <nav class="sidebar-nav">
+                    <a href="index.html" class="nav-item active">
+                        <span class="nav-icon"></span>
+                        <span class="nav-text">首页</span>
+                    </a>
+                    <a href="retrieve.html" class="nav-item">
+                        <span class="nav-icon"></span>
+                        <span class="nav-text">论文检索</span>
+                    </a>
+                    <a href="summary.html" class="nav-item">
+                        <span class="nav-icon"></span>
+                        <span class="nav-text">论文总结</span>
+                    </a>
+                    <a href="translate.html" class="nav-item">
+                        <span class="nav-icon"></span>
+                        <span class="nav-text">论文翻译</span>
+                    </a>
+                    <a href="review.html" class="nav-item">
+                        <span class="nav-icon"></span>
+                        <span class="nav-text">综述生成</span>
+                    </a>
+                </nav>
+
+                <div class="sidebar-divider"></div>
+
+                <nav class="sidebar-nav">
+                    <a href="profile.html" class="nav-item">
+                        <span class="nav-icon"></span>
+                        <span class="nav-text">个人主页</span>
+                    </a>
+                </nav>
+            </aside>
+
+            <!-- 右侧内容区 -->
+            <main class="app-content">
+                <!-- 首页（仪表盘） -->
+                <div id="dashboard-page" class="content-page">
+                    <div class="page-header">
+                        <h2>欢迎使用AI文献辅助系统</h2>
+                        <p class="page-subtitle">一站式学术论文处理平台，助力科研工作</p>
+                    </div>
+
+                    <div class="page-intro">
+                        <div class="intro-card">
+                            <h3>系统介绍</h3>
+                            <p>AI文献辅助系统集成了论文检索、总结、翻译和综述生成四大核心功能，为科研工作者提供全方位的文献处理支持。</p>
+                        </div>
+                        <div class="intro-card">
+                            <h3>核心功能</h3>
+                            <ul>
+                                <li>智能论文检索</li>
+                                <li>自动论文总结</li>
+                                <li>专业论文翻译</li>
+                                <li>综述自动生成</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="feature-grid">
+                        <a href="retrieve.html" class="feature-card">
+                            <div class="feature-icon"></div>
+                            <h3>论文检索</h3>
+                            <p>使用AI大模型自动检索相关学术论文</p>
+                            <div class="feature-stats">
+                                <span>检索次数: <strong id="total-retrievals">0</strong></span>
+                            </div>
+                        </a>
+                        <a href="summary.html" class="feature-card">
+                            <div class="feature-icon"></div>
+                            <h3>论文总结</h3>
+                            <p>自动生成论文摘要和关键点总结</p>
+                            <div class="feature-stats">
+                                <span>总结次数: <strong id="total-summaries">0</strong></span>
+                            </div>
+                        </a>
+                        <a href="translate.html" class="feature-card">
+                            <div class="feature-icon"></div>
+                            <h3>论文翻译</h3>
+                            <p>智能翻译学术论文内容</p>
+                            <div class="feature-stats">
+                                <span>翻译次数: <strong id="total-translations">0</strong></span>
+                            </div>
+                        </a>
+                        <a href="review.html" class="feature-card">
+                            <div class="feature-icon"></div>
+                            <h3>综述生成</h3>
+                            <p>基于多篇论文自动生成综述</p>
+                            <div class="feature-stats">
+                                <span>综述次数: <strong id="total-reviews">0</strong></span>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        // 游客登录函数
+        function guestLogin() {
+            const guestUser = {
+                id: 'guest_' + Date.now(),
+                username: '游客用户',
+                isGuest: true
+            };
+            localStorage.setItem('currentUser', JSON.stringify(guestUser));
+            showMainApp();
+        }
+
+        // 显示主应用
+        function showMainApp() {
+            document.getElementById('auth-container').style.display = 'none';
+            document.getElementById('app-container').style.display = 'block';
+            loadUserData();
+        }
+
+        // 加载用户数据
+        function loadUserData() {
+            const currentUser = localStorage.getItem('currentUser');
+            if (!currentUser) return;
+
+            const user = JSON.parse(currentUser);
+            document.getElementById('user-name').textContent = user.username || '用户';
+
+            // 加载统计数据
+            const stats = JSON.parse(localStorage.getItem(`stats_${user.id}`) || '{"retrievals":0,"summaries":0,"translations":0,"reviews":0}');
+            document.getElementById('total-retrievals').textContent = stats.retrievals || 0;
+            document.getElementById('total-summaries').textContent = stats.summaries || 0;
+            document.getElementById('total-translations').textContent = stats.translations || 0;
+            document.getElementById('total-reviews').textContent = stats.reviews || 0;
+        }
+
+        // 登录函数
+        async function login() {
+            const username = document.getElementById('login-username').value;
+            const password = document.getElementById('login-password').value;
+
+            if (!username || !password) {
+                showMessage('请输入用户名和密码', 'error');
+                return;
+            }
+
+            // 简单验证：直接允许登录
+            const user = {
+                id: 'user_' + Date.now(),
+                username: username,
+                password: password
+            };
+            localStorage.setItem('currentUser', JSON.stringify(user));
+            showMessage('登录成功！', 'success');
+            setTimeout(() => {
+                showMainApp();
+            }, 500);
+        }
+
+        // 注册函数
+        async function register() {
+            const username = document.getElementById('register-username').value;
+            const email = document.getElementById('register-email').value;
+            const password = document.getElementById('register-password').value;
+
+            if (!username || !password) {
+                showMessage('请填写完整信息', 'error');
+                return;
+            }
+
+            // 简单验证：直接允许注册
+            const user = {
+                id: 'user_' + Date.now(),
+                username: username,
+                email: email,
+                password: password
+            };
+            localStorage.setItem('currentUser', JSON.stringify(user));
+            showMessage('注册成功！', 'success');
+            setTimeout(() => {
+                showMainApp();
+            }, 500);
+        }
+
+        // 退出登录
+        function logout() {
+            localStorage.removeItem('currentUser');
+            location.reload();
+        }
+
+        // 显示消息
+        function showMessage(text, type) {
+            const msg = document.getElementById('auth-message');
+            msg.textContent = text;
+            msg.className = 'auth-message ' + type;
+            setTimeout(() => {
+                msg.textContent = '';
+                msg.className = 'auth-message';
+            }, 3000);
+        }
+
+        // 切换到注册表单
+        function switchToRegister() {
+            document.getElementById('login-form').style.display = 'none';
+            document.getElementById('register-form').style.display = 'block';
+            document.getElementById('auth-title').textContent = '注册';
+        }
+
+        // 切换到登录表单
+        function switchToLogin() {
+            document.getElementById('register-form').style.display = 'none';
+            document.getElementById('login-form').style.display = 'block';
+            document.getElementById('auth-title').textContent = '登录';
+        }
+
+        // 页面加载时检查登录状态
+        document.addEventListener('DOMContentLoaded', function() {
+            const currentUser = localStorage.getItem('currentUser');
+            if (currentUser) {
+                showMainApp();
+            }
+        });
+    </script>
+</body>
+</html>

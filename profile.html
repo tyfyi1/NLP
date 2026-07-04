@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>个人主页 - AI文献辅助系统</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- 顶部导航栏 -->
+    <header class="app-header">
+        <div class="header-left">
+            <h1 class="app-title">AI文献助手</h1>
+        </div>
+        <div class="header-right">
+            <span id="user-name" class="user-name"></span>
+            <button onclick="logout()" class="logout-btn">退出</button>
+        </div>
+    </header>
+
+    <!-- 主容器 -->
+    <div class="app-container">
+        <!-- 主内容区域 -->
+        <div class="app-main">
+            <!-- 侧边导航 -->
+            <aside class="app-sidebar">
+                <nav class="sidebar-nav">
+                    <a href="index.html" class="nav-item">
+                        <span class="nav-icon"></span>
+                        <span class="nav-text">首页</span>
+                    </a>
+                    <a href="retrieve.html" class="nav-item">
+                        <span class="nav-icon"></span>
+                        <span class="nav-text">论文检索</span>
+                    </a>
+                    <a href="summary.html" class="nav-item">
+                        <span class="nav-icon"></span>
+                        <span class="nav-text">论文总结</span>
+                    </a>
+                    <a href="translate.html" class="nav-item">
+                        <span class="nav-icon"></span>
+                        <span class="nav-text">论文翻译</span>
+                    </a>
+                    <a href="review.html" class="nav-item">
+                        <span class="nav-icon"></span>
+                        <span class="nav-text">综述生成</span>
+                    </a>
+                </nav>
+                
+                <div class="sidebar-divider"></div>
+                
+                <nav class="sidebar-nav">
+                    <a href="profile.html" class="nav-item active">
+                        <span class="nav-icon"></span>
+                        <span class="nav-text">个人主页</span>
+                    </a>
+                </nav>
+            </aside>
+
+            <!-- 主内容区 -->
+            <main class="app-content">
+            <div class="page-header">
+                <h2>个人主页</h2>
+                <p class="page-subtitle">管理您的账户信息、历史记录和个性化设置</p>
+            </div>
+            
+            <div class="page-intro">
+                <div class="intro-card">
+                    <h3>账户管理</h3>
+                    <p>查看和修改您的账户信息，包括用户名、邮箱等基本信息。</p>
+                </div>
+                <div class="intro-card">
+                    <h3>历史记录</h3>
+                    <p>查看您使用系统的所有历史记录，包括检索、总结、翻译和综述生成的记录。</p>
+                </div>
+            </div>
+            
+            <div class="profile-container">
+                <div class="profile-section">
+                    <h3>用户信息</h3>
+                    <div class="profile-info">
+                        <div class="info-item">
+                            <label>用户名</label>
+                            <input type="text" id="profile-username" readonly>
+                        </div>
+                        <div class="info-item">
+                            <label>邮箱</label>
+                            <input type="email" id="profile-email" readonly>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="profile-section">
+                    <h3>历史记录</h3>
+                    <div class="history-controls">
+                        <select id="history-filter" onchange="loadHistory()">
+                            <option value="all">全部</option>
+                            <option value="retrieve">论文检索</option>
+                            <option value="summary">论文总结</option>
+                            <option value="translate">论文翻译</option>
+                            <option value="review">综述生成</option>
+                        </select>
+                        <button onclick="clearHistory()" class="tool-btn secondary">清空历史</button>
+                    </div>
+                    <div class="history-list" id="history-list"></div>
+                </div>
+                
+                <div class="profile-section">
+                    <h3>主题设置</h3>
+                    <div class="theme-settings">
+                        <div class="theme-item">
+                            <label>主题模式</label>
+                            <select id="settings-theme" onchange="previewTheme()">
+                                <option value="light">浅色</option>
+                                <option value="dark">深色</option>
+                            </select>
+                        </div>
+                        <div class="theme-item">
+                            <label>主色调</label>
+                            <input type="color" id="settings-primary-color" value="#27ae60" onchange="previewTheme()">
+                        </div>
+                        <div class="theme-item">
+                            <label>次要色调</label>
+                            <input type="color" id="settings-secondary-color" value="#2ecc71" onchange="previewTheme()">
+                        </div>
+                    </div>
+                    <button onclick="saveAppSettings()" class="tool-btn primary">保存设置</button>
+                </div>
+            </div>
+        </main>
+        </div>
+    </div>
+
+    <script>
+        function checkLogin() {
+            const currentUser = localStorage.getItem('currentUser');
+            if (!currentUser) {
+                window.location.href = 'index.html';
+                return;
+            }
+            const user = JSON.parse(currentUser);
+            document.getElementById('user-name').textContent = user.username;
+            document.getElementById('profile-username').value = user.username;
+            document.getElementById('profile-email').value = user.email || '未设置';
+            loadHistory();
+            loadThemeSettings();
+        }
+
+        function loadHistory() {
+            const currentUser = localStorage.getItem('currentUser');
+            if (!currentUser) return;
+            
+            const user = JSON.parse(currentUser);
+            const filter = document.getElementById('history-filter').value;
+            const history = JSON.parse(localStorage.getItem(`history_${user.id}`) || '[]');
+            
+            let filteredHistory = history;
+            if (filter !== 'all') {
+                filteredHistory = history.filter(item => item.type === filter);
+            }
+            
+            const historyList = document.getElementById('history-list');
+            
+            if (filteredHistory.length === 0) {
+                historyList.innerHTML = '<div class="info-message">暂无历史记录</div>';
+                return;
+            }
+            
+            let html = '';
+            filteredHistory.forEach((item, index) => {
+                const typeNames = {
+                    'retrieve': '论文检索',
+                    'summary': '论文总结',
+                    'translate': '论文翻译',
+                    'review': '综述生成'
+                };
+                const typeIcons = {
+                    'retrieve': '🔍',
+                    'summary': '📝',
+                    'translate': '🌐',
+                    'review': '📊'
+                };
+                const time = new Date(item.time).toLocaleString('zh-CN');
+                
+                html += `
+                    <div class="history-item">
+                        <div class="history-icon">${typeIcons[item.type] || '📄'}</div>
+                        <div class="history-content">
+                            <div class="history-type">${typeNames[item.type] || item.type}</div>
+                            <div class="history-query">${item.query}</div>
+                            <div class="history-result">${item.result}</div>
+                            <div class="history-time">${time}</div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            historyList.innerHTML = html;
+        }
+
+        function clearHistory() {
+            if (!confirm('确定要清空所有历史记录吗？')) return;
+            
+            const currentUser = localStorage.getItem('currentUser');
+            if (!currentUser) return;
+            
+            const user = JSON.parse(currentUser);
+            localStorage.removeItem(`history_${user.id}`);
+            loadHistory();
+        }
+
+        function loadThemeSettings() {
+            const currentUser = localStorage.getItem('currentUser');
+            if (!currentUser) return;
+            
+            const user = JSON.parse(currentUser);
+            const theme = JSON.parse(localStorage.getItem(`theme_${user.id}`) || '{}');
+            
+            if (theme.theme) {
+                document.getElementById('settings-theme').value = theme.theme;
+            }
+            if (theme.primaryColor) {
+                document.getElementById('settings-primary-color').value = theme.primaryColor;
+            }
+            if (theme.secondaryColor) {
+                document.getElementById('settings-secondary-color').value = theme.secondaryColor;
+            }
+            
+            applyTheme(theme);
+        }
+
+        function previewTheme() {
+            const theme = document.getElementById('settings-theme').value;
+            const primaryColor = document.getElementById('settings-primary-color').value;
+            const secondaryColor = document.getElementById('settings-secondary-color').value;
+            
+            applyTheme({ theme, primaryColor, secondaryColor });
+        }
+
+        function applyTheme(settings) {
+            if (settings.theme === 'dark') {
+                document.body.classList.add('dark-theme');
+            } else {
+                document.body.classList.remove('dark-theme');
+            }
+            
+            if (settings.primaryColor) {
+                document.documentElement.style.setProperty('--primary-color', settings.primaryColor);
+                document.documentElement.style.setProperty('--accent-color', settings.primaryColor);
+                document.documentElement.style.setProperty('--gradient', `linear-gradient(135deg, ${settings.primaryColor}, ${settings.secondaryColor || settings.primaryColor})`);
+            }
+            if (settings.secondaryColor) {
+                document.documentElement.style.setProperty('--secondary-color', settings.secondaryColor);
+            }
+        }
+
+        function saveAppSettings() {
+            const currentUser = localStorage.getItem('currentUser');
+            if (!currentUser) return;
+            
+            const user = JSON.parse(currentUser);
+            const theme = document.getElementById('settings-theme').value;
+            const primaryColor = document.getElementById('settings-primary-color').value;
+            const secondaryColor = document.getElementById('settings-secondary-color').value;
+            
+            const settings = { theme, primaryColor, secondaryColor };
+            localStorage.setItem(`theme_${user.id}`, JSON.stringify(settings));
+            
+            alert('设置已保存');
+        }
+
+        function logout() {
+            localStorage.removeItem('currentUser');
+            window.location.href = 'index.html';
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            checkLogin();
+        });
+    </script>
+</body>
+</html>

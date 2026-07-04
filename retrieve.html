@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>论文检索 - AI文献辅助系统</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body>
+    <!-- 顶部导航栏 -->
+    <header class="app-header">
+        <div class="header-left">
+            <h1 class="app-title">AI文献助手</h1>
+        </div>
+        <div class="header-right">
+            <span id="user-name" class="user-name"></span>
+        </div>
+    </header>
+
+    <!-- 主容器 -->
+    <div class="app-container">
+        <!-- 主内容区域 -->
+        <div class="app-main">
+            <!-- 侧边导航 -->
+            <aside class="app-sidebar">
+                <nav class="sidebar-nav">
+                    <a href="index.html" class="nav-item">
+                        <span class="nav-icon"></span>
+                        <span class="nav-text">首页</span>
+                    </a>
+                    <a href="retrieve.html" class="nav-item active">
+                        <span class="nav-icon"></span>
+                        <span class="nav-text">论文检索</span>
+                    </a>
+                    <a href="summary.html" class="nav-item">
+                        <span class="nav-icon"></span>
+                        <span class="nav-text">论文总结</span>
+                    </a>
+                    <a href="translate.html" class="nav-item">
+                        <span class="nav-icon"></span>
+                        <span class="nav-text">论文翻译</span>
+                    </a>
+                    <a href="review.html" class="nav-item">
+                        <span class="nav-icon"></span>
+                        <span class="nav-text">综述生成</span>
+                    </a>
+                </nav>
+                
+                <div class="sidebar-divider"></div>
+                
+                <nav class="sidebar-nav">
+                    <a href="profile.html" class="nav-item">
+                        <span class="nav-icon"></span>
+                        <span class="nav-text">个人主页</span>
+                    </a>
+                </nav>
+            </aside>
+
+            <!-- 主内容区 -->
+            <main class="app-content">
+            <div class="page-header">
+                <h2>论文检索</h2>
+                <p class="page-subtitle">使用AI大模型智能检索相关学术论文</p>
+            </div>
+            
+            <div class="page-intro">
+                <div class="intro-card">
+                    <h3>功能介绍</h3>
+                    <p>基于语义理解的智能论文检索系统，能够理解您的研究问题，自动提取关键概念，并在学术数据库中检索最相关的论文。</p>
+                </div>
+                <div class="intro-card">
+                    <h3>使用方法</h3>
+                    <ul>
+                        <li>输入研究问题或关键词</li>
+                        <li>选择检索模式（LLM精排或快速模式）</li>
+                        <li>设置返回数量</li>
+                        <li>点击"开始检索"按钮</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="tool-container">
+                <div class="tool-config">
+                    <div class="config-item">
+                        <label>检索策略</label>
+                        <select id="retrieve-strategy">
+                            <option value="two_stage">两阶段检索（推荐）</option>
+                            <option value="single_stage">单阶段检索</option>
+                        </select>
+                        <small class="config-tip">两阶段检索先获取候选论文，再提取真实术语进行增强检索，结果更精准</small>
+                    </div>
+                    <div class="config-item">
+                        <label>排序模式</label>
+                        <select id="retrieve-mode">
+                            <option value="B">LLM精排（推荐）</option>
+                            <option value="A">快速模式</option>
+                        </select>
+                        <small class="config-tip">LLM精排模式使用大模型进行语义理解，结果更准确</small>
+                    </div>
+                    <div class="config-item">
+                        <label>返回数量</label>
+                        <input type="number" id="retrieve-topk" value="10" min="1" max="50">
+                        <small class="config-tip">建议返回10-20篇论文</small>
+                    </div>
+                </div>
+                
+                <div class="tool-input">
+                    <label class="input-label">输入研究问题</label>
+                    <textarea id="retrieve-query" placeholder="请输入研究问题或关键词，例如：大模型微调中的灾难性遗忘"></textarea>
+                    <div class="input-actions">
+                        <button onclick="retrievePapers()" class="tool-btn primary">开始检索</button>
+                        <button onclick="clearInput()" class="tool-btn secondary">清空</button>
+                    </div>
+                </div>
+                
+                <div class="tool-output">
+                    <h3>检索结果</h3>
+                    <div id="retrieve-results" class="output-box"></div>
+                </div>
+            </div>
+        </main>
+        </div>
+    </div>
+
+    <script>
+        const RETRIEVE_API_URL = 'http://localhost:5002';
+
+        function getQueryParams() {
+            const params = new URLSearchParams(window.location.search);
+            return {
+                query: params.get('query') || ''
+            };
+        }
+
+        function checkLogin() {
+            document.getElementById('user-name').textContent = '用户';
+        }
+
+        async function retrievePapers() {
+            const query = document.getElementById('retrieve-query').value;
+            const mode = document.getElementById('retrieve-mode').value;
+            const topk = document.getElementById('retrieve-topk').value;
+            const strategy = document.getElementById('retrieve-strategy').value;
+            
+            if (!query) {
+                document.getElementById('retrieve-results').innerHTML = '<div class="error-message">请输入检索查询内容</div>';
+                return;
+            }
+            
+            const strategyText = strategy === 'two_stage' ? '两阶段检索' : '单阶段检索';
+            document.getElementById('retrieve-results').innerHTML = `<div class="loading">正在${strategyText}，请稍候...</div>`;
+            
+            try {
+                const response = await fetch(`${RETRIEVE_API_URL}/api/retrieve`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        query: query,
+                        ranking_mode: mode,
+                        top_k: parseInt(topk),
+                        use_two_stage: strategy === 'two_stage'
+                    })
+                });
+                
+                const data = await response.json();
+                console.log('检索API返回:', data);
+                
+                if (data.success) {
+                    if (data.papers && data.papers.length > 0) {
+                        displayResults(data.papers, data.retrieval_mode);
+                        saveHistory(query, data.papers.length);
+                    } else {
+                        document.getElementById('retrieve-results').innerHTML = `<div class="info-message">${data.message || '未找到相关论文'}<br><small>检索模式: ${data.retrieval_mode || '未知'}</small></div>`;
+                    }
+                } else {
+                    document.getElementById('retrieve-results').innerHTML = `<div class="error-message">${data.message || '检索失败'}</div>`;
+                }
+            } catch (error) {
+                console.error('检索错误:', error);
+                document.getElementById('retrieve-results').innerHTML = `<div class="error-message">检索失败: ${error.message}<br>请确保检索API服务正在运行 (端口5002)</div>`;
+            }
+        }
+
+        function displayResults(papers, retrieval_mode) {
+            const resultsDiv = document.getElementById('retrieve-results');
+            
+            let html = `<div class="results-header">共找到 ${papers.length} 篇相关论文<br><small>检索模式: ${retrieval_mode || '未知'}</small></div>`;
+            
+            papers.forEach((paper, index) => {
+                html += `
+                    <div class="paper-result">
+                        <div class="paper-number">${index + 1}</div>
+                        <div class="paper-details">
+                            <div class="paper-title">${paper.title}</div>
+                            <div class="paper-meta">
+                                <span class="paper-year">年份: ${paper.year}</span>
+                                <span class="paper-score">相关性: ${paper.relevance_score}</span>
+                            </div>
+                            <div class="paper-concepts">匹配概念: ${paper.matched_concepts.join(', ')}</div>
+                            <div class="paper-url">
+                                <a href="${paper.url}" target="_blank">查看论文</a>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            resultsDiv.innerHTML = html;
+        }
+
+        function clearInput() {
+            document.getElementById('retrieve-query').value = '';
+            document.getElementById('retrieve-results').innerHTML = '';
+        }
+
+        function saveHistory(query, count) {
+            const currentUser = localStorage.getItem('currentUser');
+            if (!currentUser) return;
+            
+            const user = JSON.parse(currentUser);
+            const history = JSON.parse(localStorage.getItem(`history_${user.id}`) || '[]');
+            
+            history.unshift({
+                type: 'retrieve',
+                query: query,
+                result: `找到 ${count} 篇论文`,
+                time: new Date().toISOString()
+            });
+            
+            localStorage.setItem(`history_${user.id}`, JSON.stringify(history.slice(0, 50)));
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            checkLogin();
+            const params = getQueryParams();
+            if (params.query) {
+                document.getElementById('retrieve-query').value = params.query;
+            }
+        });
+    </script>
+</body>
+</html>
