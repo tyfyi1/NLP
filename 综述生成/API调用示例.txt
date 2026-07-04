@@ -1,0 +1,24 @@
+curl --location 'https://ark.cn-beijing.volces.com/api/v3/responses' \
+--header "Authorization: Bearer 04781532-63f2-4cce-a096-74538d16965c" \
+--header 'Content-Type: application/json' \
+--data '{
+    "model": "deepseek-v4-pro-260425",
+    "stream": true,
+    "tools": [
+        {
+            "type": "web_search",
+            "max_keyword": 3
+        }
+    ],
+    "input": [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "input_text",
+                    "text": "今天有什么热点新闻"
+                }
+            ]
+        }
+    ]
+}'

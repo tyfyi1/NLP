@@ -1,0 +1,19 @@
+INFO:     Started server process [33396]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+ERROR:    [Errno 10048] error while attempting to bind on address ('0.0.0.0', 8001): 通常每个套接字地址(协议/网络地址/端口)只允许使用一次。
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+============================================================
+学术综述生成服务
+============================================================
+API地址: https://ark.cn-beijing.volces.com/api/v3
+Lite模型: deepseek-v4-pro-260425
+Pro模型: deepseek-v4-pro-260425
+并发限制: 3
+PDF目录: D:\综述生成\local_papers
+缓存目录: D:\综述生成\cache
+输出目录: D:\综述生成\output
+============================================================
+服务地址: http://0.0.0.0:8001
+============================================================
